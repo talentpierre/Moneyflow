@@ -3,7 +3,6 @@
 var_macaroonpath="/home/pi/.lnd/readonly.macaroon"
 var_tlscertpath="/home/pi/.lnd/tls.cert"
 var_rpcserver="192.168.192.10"
-var_seconds=10
 var_satoshi=10
 #rhash=$(lncli --network=testnet --macaroonpath $var_macaroonpath --tlscertpath $var_tlscertpath --rpcserver $var_rpcserver listinvoices --max_invoices 1 | grep r_hash | cut -d '"' -f 4)
 lncli --network=testnet --macaroonpath $var_macaroonpath --tlscertpath $var_tlscertpath --rpcserver $var_rpcserver listinvoices --max_invoices 1 > /home/pi/Moneyflow/LND/bash/lastinvoice.txt
@@ -18,21 +17,19 @@ oldrhash=$rhash
 oldsettledate=$settledate
 
 lncli --network=testnet --macaroonpath $var_macaroonpath --tlscertpath $var_tlscertpath --rpcserver $var_rpcserver listinvoices --max_invoices 1 > /home/pi/Moneyflow/LND/bash/lastinvoice.txt
-#sat=$(cat lastinvoice.txt | grep amt_paid_sat | cut -d '"' -f 4)
-#rhash=$(cat lastinvoice.txt | grep r_hash | cut -d '"' -f 4)
-#settledate=$(cat lastinvoice.txt | grep settle_date | cut -d '"' -f 4)
 
 openstate='OPEN'
 state=$(cat lastinvoice.txt | grep state | cut -d '"' -f 4)
 if [ "$state" != "$openstate" ]
+#sat=$(cat lastinvoice.txt | grep amt_paid_sat | cut -d '"' -f 4)
+#rhash=$(cat lastinvoice.txt | grep r_hash | cut -d '"' -f 4)
+#settledate=$(cat lastinvoice.txt | grep settle_date | cut -d '"' -f 4)
 then
     echo "######STATE-BEDINGUNG#######"
     sat=$(cat lastinvoice.txt | grep amt_paid_sat | cut -d '"' -f 4)
     rhash=$(cat lastinvoice.txt | grep r_hash | cut -d '"' -f 4)
     settledate=$(cat lastinvoice.txt | grep settle_date | cut -d '"' -f 4)
 fi
-
-
 
 settledelta=`expr $settledate - $oldsettledate`
 
