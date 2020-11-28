@@ -21,9 +21,6 @@ lncli --network=testnet --macaroonpath $var_macaroonpath --tlscertpath $var_tlsc
 openstate='OPEN'
 state=$(cat lastinvoice.txt | grep state | cut -d '"' -f 4)
 if [ "$state" != "$openstate" ]
-#sat=$(cat lastinvoice.txt | grep amt_paid_sat | cut -d '"' -f 4)
-#rhash=$(cat lastinvoice.txt | grep r_hash | cut -d '"' -f 4)
-#settledate=$(cat lastinvoice.txt | grep settle_date | cut -d '"' -f 4)
 then
     echo "######STATE-BEDINGUNG#######"
     sat=$(cat lastinvoice.txt | grep amt_paid_sat | cut -d '"' -f 4)
