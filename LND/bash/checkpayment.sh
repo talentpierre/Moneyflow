@@ -1,13 +1,20 @@
 #!/bin/bash
 
+func_setInvoiceVariable () {
+	tempvar=$(jq -r ".invoices[0].$2" lastinvoice.txt)
+	printf -v $1 "$tempvar"
+	unset tempvar
+}
+
 var_macaroonpath="/home/pi/.lnd/readonly.macaroon"
 var_tlscertpath="/home/pi/.lnd/tls.cert"
 var_rpcserver="192.168.192.10"
 var_satoshi=10
-#rhash=$(lncli --network=testnet --macaroonpath $var_macaroonpath --tlscertpath $var_tlscertpath --rpcserver $var_rpcserver listinvoices --max_invoices 1 | grep r_hash | cut -d '"' -f 4)
-lncli --network=testnet --macaroonpath $var_macaroonpath --tlscertpath $var_tlscertpath --rpcserver $var_rpcserver listinvoices --max_invoices 1 > /home/pi/Moneyflow/LND/bash/lastinvoice.txt
-rhash=$(cat lastinvoice.txt | grep r_hash | cut -d '"' -f 4)
-settledate=$(cat lastinvoice.txt | grep settle_date | cut -d '"' -f 4)
+var_seconds=5
+lncli --network=testnet listinvoices --max_invoices 1 > /home/admin/Moneyflow/LND/bash/lastinvoice.txt
+#lncli --network=testnet --macaroonpath $var_macaroonpath --tlscertpath $var_tlscertpath --rpcserver $var_rpcserver listinvoices --max_invoices 1 > /home/pi/Moneyflow/LND/bash/lastinvoice.txt
+func_setInvoiceVariable rhash r_hash
+func_setInvoiceVariable settledate settle_date
 account=0
 checktime=$(date '+%s')
 
@@ -16,16 +23,17 @@ do
 oldrhash=$rhash
 oldsettledate=$settledate
 
-lncli --network=testnet --macaroonpath $var_macaroonpath --tlscertpath $var_tlscertpath --rpcserver $var_rpcserver listinvoices --max_invoices 1 > /home/pi/Moneyflow/LND/bash/lastinvoice.txt
+lncli --network=testnet listinvoices --max_invoices 1 > /home/admin/Moneyflow/LND/bash/lastinvoice.txt && sleep 1
+#lncli --network=testnet --macaroonpath $var_macaroonpath --tlscertpath $var_tlscertpath --rpcserver $var_rpcserver listinvoices --max_invoices 1 > /home/pi/Moneyflow/LND/bash/lastinvoice.txt
 
 openstate='OPEN'
-state=$(cat lastinvoice.txt | grep state | cut -d '"' -f 4)
+func_setInvoiceVariable state state
 if [ "$state" != "$openstate" ]
 then
     echo "######STATE-BEDINGUNG#######"
-    sat=$(cat lastinvoice.txt | grep amt_paid_sat | cut -d '"' -f 4)
-    rhash=$(cat lastinvoice.txt | grep r_hash | cut -d '"' -f 4)
-    settledate=$(cat lastinvoice.txt | grep settle_date | cut -d '"' -f 4)
+    func_setInvoiceVariable sat amt_paid_sat
+    func_setInvoiceVariable rhash r_hash
+    func_setInvoiceVariable settledate settle_date
 fi
 
 settledelta=`expr $settledate - $oldsettledate`
@@ -43,7 +51,7 @@ then
       account=$((account+1))
       checktime=$current
    fi
-   account=$((account+5))
+   account=$((account+1))
 fi
 
 current=$(date '+%s')
@@ -60,10 +68,10 @@ echo "Account is: $account"
 if [ "$account" -ge 1 ]
 then
    echo Driving!
-   python3 relay-on.py &
+#   python3 relay-on.py &
 else
    echo Stop!
-   python3 relay-off.py &
+#   python3 relay-off.py &
 fi
 echo ""
 
